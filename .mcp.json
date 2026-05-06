@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "fred": {
+      "command": "go",
+      "args": ["run", "./cmd/fred-mcp"],
+      "env": {
+        "FRED_API_KEY": "${FRED_API_KEY}"
+      }
+    }
+  }
+}
