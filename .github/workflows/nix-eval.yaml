@@ -1,0 +1,19 @@
+name: Nix Eval
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: DeterminateSystems/nix-installer-action@v22
+      - name: Verify flake evaluates on all systems
+        run: |-
+          nix flake show --all-systems
+          for system in x86_64-linux aarch64-linux x86_64-darwin aarch64-darwin; do
+            nix eval ".#packages.$system.default.drvPath" --raw
+          done
