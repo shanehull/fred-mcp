@@ -1,0 +1,13 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "fred": {
+      "type": "local",
+      "command": ["go", "run", "./cmd/fred-mcp"],
+      "enabled": true,
+      "environment": {
+        "FRED_API_KEY": "{env:FRED_API_KEY}"
+      }
+    }
+  }
+}
