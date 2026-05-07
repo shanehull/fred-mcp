@@ -34,7 +34,6 @@ Read-only MCP tools for the Federal Reserve Economic Data API.
 - **Release date range limit** — `realtime_start` to `realtime_end` must be within a ~30-year window. The API rejects `1776-01-01` to `9999-12-31`. Narrow to the release vintages you actually need.
 - **Observation count limits** — the API caps observations per call. Use `limit` and `sort_order="desc"` for latest values; paginate with `offset` for long histories.
 - **GeoFRED series** use the same endpoints (`get_series_observations`, etc.) — no separate API. Just pass the series ID (e.g., `WIPCPI`).
-
 ## Reference IDs
 
 | Type     | ID          | Name                                      |
