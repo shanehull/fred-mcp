@@ -20,11 +20,17 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@v22
       - name: Update vendorHash
         run: |
-          export HASH=$(nix build . 2>&1 | grep -oP 'got:\s*\Ksha256-[A-Za-z0-9+/=]+' | tail -n1)
+          HASH=$(nix build . 2>&1 | grep -oP 'got:\s*\Ksha256-[A-Za-z0-9+/=]+' | tail -n1)
+          if [ -z "$HASH" ]; then
+            echo "nix build did not produce a hash — skipping update"
+            echo "SKIP=true" >> "$GITHUB_ENV"
+            exit 0
+          fi
           echo "Found hash: $HASH"
           jq --arg hash "$HASH" '.vendorHash = $hash' nix/hashes.json > nix/hashes.json.tmp
           mv nix/hashes.json.tmp nix/hashes.json
       - name: Commit updated hashes
+        if: env.SKIP != 'true'
         run: |-
           git config user.name github-actions
           git config user.email github-actions@github.com

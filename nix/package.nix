@@ -14,11 +14,13 @@ buildGoModule {
   vendorHash = hashes.vendorHash;
   subPackages = [ "cmd/fred-mcp" ];
 
+  env.CGO_ENABLED = "0";
+
   ldflags = [
-    "-s" "-w"
+    "-s"
+    "-w"
     "-X main.version=${manifest."."}"
   ];
-  CGO_ENABLED = 0;
 
   meta = with lib; {
     description = "MCP server for Federal Reserve Economic Data (FRED)";

@@ -25,10 +25,15 @@ MCP server for [Federal Reserve Economic Data](https://fred.stlouisfed.org/). Wr
 **Stdio** — the binary runs locally, your MCP client launches it:
 
 ```bash
+# after installing
 FRED_API_KEY=your-key fred-mcp
+
+# or run directly without installing
+FRED_API_KEY=your-key go run github.com/shanehull/fred-mcp/cmd/fred-mcp@latest
 ```
 
-Client config (shared across Claude Code, OpenCode, Codex, Gemini CLI, Goose, and VS Code):
+
+Client config for most clients (Claude Code, Codex, Gemini CLI, Goose, VS Code):
 
 ```json
 {
@@ -36,6 +41,38 @@ Client config (shared across Claude Code, OpenCode, Codex, Gemini CLI, Goose, an
     "fred": {
       "command": "fred-mcp",
       "env": { "FRED_API_KEY": "your-key" }
+    }
+  }
+}
+```
+
+Or without installing — point your client at `go run`:
+
+```json
+{
+  "mcpServers": {
+    "fred": {
+      "command": "go",
+      "args": ["run", "github.com/shanehull/fred-mcp/cmd/fred-mcp@latest"],
+      "env": { "FRED_API_KEY": "your-key" }
+    }
+  }
+}
+```
+
+OpenCode uses its own format:
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "fred": {
+      "type": "local",
+      "command": ["go", "run", "github.com/shanehull/fred-mcp/cmd/fred-mcp@latest"],
+      "enabled": true,
+      "environment": {
+        "FRED_API_KEY": "{env:FRED_API_KEY}"
+      }
     }
   }
 }
