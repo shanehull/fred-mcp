@@ -119,7 +119,7 @@ func TestAuth_ValidJWT_AudienceMismatch(t *testing.T) {
 func TestAuth_ValidJWT_EmailMatch(t *testing.T) {
 	cfg := &config.Config{
 		OAuthAudience: "test-client",
-		AllowedEmail:  "alice@example.com",
+		AllowedEmails: []string{"alice@example.com"},
 	}
 	jwks, key := newTestJWKS(t)
 	handler := middleware.Auth(cfg, jwks)(okHandler())
@@ -139,7 +139,7 @@ func TestAuth_ValidJWT_EmailMatch(t *testing.T) {
 func TestAuth_ValidJWT_EmailMismatch(t *testing.T) {
 	cfg := &config.Config{
 		OAuthAudience: "test-client",
-		AllowedEmail:  "alice@example.com",
+		AllowedEmails: []string{"alice@example.com"},
 	}
 	jwks, key := newTestJWKS(t)
 	handler := middleware.Auth(cfg, jwks)(okHandler())
@@ -153,5 +153,25 @@ func TestAuth_ValidJWT_EmailMismatch(t *testing.T) {
 
 	if rec.Code != http.StatusForbidden {
 		t.Errorf("expected 403, got %d", rec.Code)
+	}
+}
+
+func TestAuth_ValidJWT_MultipleEmails(t *testing.T) {
+	cfg := &config.Config{
+		OAuthAudience: "test-client",
+		AllowedEmails: []string{"alice@example.com", "bob@example.com"},
+	}
+	jwks, key := newTestJWKS(t)
+	handler := middleware.Auth(cfg, jwks)(okHandler())
+
+	token := signJWT(t, key, jwt.MapClaims{
+		"aud":   "test-client",
+		"email": "bob@example.com",
+	})
+	rec := httptest.NewRecorder()
+	handler.ServeHTTP(rec, requestWithToken(token))
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", rec.Code)
 	}
 }

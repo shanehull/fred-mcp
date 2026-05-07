@@ -139,7 +139,7 @@ When `OAUTH_AUDIENCE` is set, MCP routes require a valid Bearer token. The serve
 | `/token`                                  | Token proxy (injects client credentials) |
 | `/config`                                 | OAuth config endpoint                    |
 
-Tokens are validated via JWKS (JWT) with opaque token fallback (Google tokeninfo). Restrict access with `OAUTH_ALLOWED_EMAIL`.
+Tokens are validated via JWKS (JWT) with opaque token fallback (Google tokeninfo). Restrict access with `OAUTH_ALLOWED_EMAILS` (comma-separated). `OAUTH_ALLOWED_EMAIL` is deprecated but still works.
 
 ### Docker
 
@@ -260,7 +260,8 @@ All settings via environment variables.
 | `PUBLIC_HOST`         | _(auto)_     | Public host for discovery URLs      |
 | `OAUTH_AUDIENCE`      | _(empty)_    | OAuth client ID; unset = no auth    |
 | `OAUTH_CLIENT_SECRET` | _(empty)_    | OAuth client secret (server-side)   |
-| `OAUTH_ALLOWED_EMAIL` | _(empty)_    | Restrict access to a specific email |
+| `OAUTH_ALLOWED_EMAILS` | _(empty)_    | Restrict access to emails (comma-separated) |
+| `OAUTH_ALLOWED_EMAIL`  | _(empty)_    | _(deprecated)_ Single email; use `OAUTH_ALLOWED_EMAILS` |
 
 ## Install
 

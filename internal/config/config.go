@@ -1,6 +1,9 @@
 package config
 
-import "os"
+import (
+	"os"
+	"strings"
+)
 
 type Config struct {
 	FredAPIKey        string
@@ -12,7 +15,31 @@ type Config struct {
 	PublicHost        string
 	OAuthAudience     string
 	OAuthClientSecret string
-	AllowedEmail      string
+	AllowedEmails     []string
+}
+
+func parseEmails(raw string) []string {
+	if raw == "" {
+		return nil
+	}
+	var emails []string
+	for _, e := range strings.Split(raw, ",") {
+		e = strings.TrimSpace(e)
+		if e != "" {
+			emails = append(emails, e)
+		}
+	}
+	return emails
+}
+
+func loadAllowedEmails() []string {
+	if raw := os.Getenv("OAUTH_ALLOWED_EMAILS"); raw != "" {
+		return parseEmails(raw)
+	}
+	if raw := os.Getenv("OAUTH_ALLOWED_EMAIL"); raw != "" {
+		return parseEmails(raw)
+	}
+	return nil
 }
 
 func getEnv(key, fallback string) string {
@@ -33,6 +60,6 @@ func Load() *Config {
 		PublicHost:        os.Getenv("PUBLIC_HOST"),
 		OAuthAudience:     os.Getenv("OAUTH_AUDIENCE"),
 		OAuthClientSecret: os.Getenv("OAUTH_CLIENT_SECRET"),
-		AllowedEmail:      os.Getenv("OAUTH_ALLOWED_EMAIL"),
+		AllowedEmails:     loadAllowedEmails(),
 	}
 }

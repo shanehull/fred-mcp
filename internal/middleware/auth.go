@@ -54,8 +54,8 @@ func Auth(cfg *config.Config, jwks *keyfunc.JWKS) func(http.Handler) http.Handle
 				return
 			}
 
-			if cfg.AllowedEmail != "" && email != cfg.AllowedEmail {
-				slog.Warn("email not allowed", "got", email, "want", cfg.AllowedEmail)
+			if !emailAllowed(cfg.AllowedEmails, email) {
+				slog.Warn("email not allowed", "got", email)
 				http.Error(w, "Forbidden", http.StatusForbidden)
 				return
 			}
@@ -73,10 +73,10 @@ func validateClaims(cfg *config.Config, claims jwt.MapClaims) bool {
 			return false
 		}
 	}
-	if cfg.AllowedEmail != "" {
+	if len(cfg.AllowedEmails) > 0 {
 		email, _ := claims["email"].(string)
-		if email != cfg.AllowedEmail {
-			slog.Warn("email not allowed", "got", email, "want", cfg.AllowedEmail)
+		if !emailAllowed(cfg.AllowedEmails, email) {
+			slog.Warn("email not allowed", "got", email)
 			return false
 		}
 	}
@@ -112,6 +112,18 @@ func validateAccessToken(token, expectedAudience string) (string, error) {
 func contains(slice []string, item string) bool {
 	for _, s := range slice {
 		if s == item {
+			return true
+		}
+	}
+	return false
+}
+
+func emailAllowed(allowed []string, email string) bool {
+	if len(allowed) == 0 {
+		return true
+	}
+	for _, a := range allowed {
+		if a == email {
 			return true
 		}
 	}
