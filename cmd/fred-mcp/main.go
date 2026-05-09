@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/MicahParks/keyfunc/v2"
@@ -89,11 +92,38 @@ func runServe() {
 
 	handler := loggingMiddleware(enableCORS(mux))
 
-	slog.Info("FRED MCP server starting", "port", cfg.Port)
-	if err := http.ListenAndServe(":"+cfg.Port, handler); err != nil {
-		slog.Error("server failed", "error", err)
-		os.Exit(1)
+	srv := &http.Server{
+		Addr:    ":" + cfg.Port,
+		Handler: handler,
 	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	go func() {
+		slog.Info("FRED MCP server starting", "port", cfg.Port)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			slog.Error("server error", "error", err)
+			stop()
+		}
+	}()
+
+	<-ctx.Done()
+
+	slog.Info("shutting down")
+
+	if jwks != nil {
+		jwks.EndBackground()
+	}
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(shutdownCtx); err != nil {
+		slog.Error("forced shutdown", "error", err)
+	}
+
+	slog.Info("server stopped")
 }
 
 func registerHTTPHandlers(mux *http.ServeMux, cfg *config.Config, sse *server.SSEServer, streamable *server.StreamableHTTPServer, auth func(http.Handler) http.Handler) {
