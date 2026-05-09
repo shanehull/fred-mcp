@@ -127,6 +127,8 @@ func runServe() {
 }
 
 func registerHTTPHandlers(mux *http.ServeMux, cfg *config.Config, sse *server.SSEServer, streamable *server.StreamableHTTPServer, auth func(http.Handler) http.Handler) {
+	mux.HandleFunc("/healthz", handlers.HandleHealthz())
+
 	mux.Handle("/sse", auth(sse.SSEHandler()))
 	mux.Handle("/message", auth(sse.MessageHandler()))
 	mux.Handle("/mcp", auth(streamable))
