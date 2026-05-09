@@ -55,6 +55,19 @@ func TestHandleGetRegionalData_Success(t *testing.T) {
 	}))
 	defer mock.Close()
 	client := newTestClient(t, mock)
-	result, _ := tools.HandleGetRegionalData(context.Background(), client, toolRequest("series_group", "882"))
+	result, _ := tools.HandleGetRegionalData(context.Background(), client, toolRequest(
+		"series_group", "882",
+		"date", "2013-01-01",
+		"frequency", "a",
+		"units", "lin",
+		"season", "NSA",
+		"region_type", "state",
+	))
 	assertTextContains(t, result, "New York")
+}
+
+func TestHandleGetRegionalData_MissingParam(t *testing.T) {
+	client := newTestClient(t, nil)
+	result, _ := tools.HandleGetRegionalData(context.Background(), client, toolRequest())
+	assertIsError(t, result)
 }
