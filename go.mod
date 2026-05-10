@@ -6,7 +6,7 @@ require (
 	github.com/MicahParks/keyfunc/v2 v2.1.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/mark3labs/mcp-go v0.52.0
-	github.com/shanehull/go-fred v0.1.1
+	github.com/shanehull/go-fred v0.1.2
 )
 
 require (
