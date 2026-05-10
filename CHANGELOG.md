@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.2](https://github.com/shanehull/fred-mcp/compare/v0.1.1...v0.1.2) (2026-05-10)
+
+
+### Bug Fixes
+
+* update go-fred and fix geofred tests for required params ([#17](https://github.com/shanehull/fred-mcp/issues/17)) ([4b07e20](https://github.com/shanehull/fred-mcp/commit/4b07e20ce2d0c3951d2c801deb257d2f8833de2e))
+* update go-fred to v0.1.2 ([#19](https://github.com/shanehull/fred-mcp/issues/19)) ([cc400a6](https://github.com/shanehull/fred-mcp/commit/cc400a61c32ddab72acc01ec803ee5948cf1724a))
+
 ## [0.1.1](https://github.com/shanehull/fred-mcp/compare/v0.1.0...v0.1.1) (2026-05-09)
 
 
