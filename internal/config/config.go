@@ -12,7 +12,6 @@ type Config struct {
 	OAuthJwksURL      string
 	OAuthAuthorizeURL string
 	OAuthTokenURL     string
-	PublicHost        string
 	OAuthAudience     string
 	OAuthClientSecret string
 	AllowedEmails     []string
@@ -57,7 +56,6 @@ func Load() *Config {
 		OAuthJwksURL:      getEnv("OAUTH_JWKS_URL", "https://www.googleapis.com/oauth2/v3/certs"),
 		OAuthAuthorizeURL: getEnv("OAUTH_AUTHORIZE_URL", "https://accounts.google.com/o/oauth2/v2/auth"),
 		OAuthTokenURL:     getEnv("OAUTH_TOKEN_URL", "https://oauth2.googleapis.com/token"),
-		PublicHost:        os.Getenv("PUBLIC_HOST"),
 		OAuthAudience:     os.Getenv("OAUTH_AUDIENCE"),
 		OAuthClientSecret: os.Getenv("OAUTH_CLIENT_SECRET"),
 		AllowedEmails:     loadAllowedEmails(),
