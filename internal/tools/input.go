@@ -217,8 +217,13 @@ type CategorySeriesInput struct {
 
 // SeriesDataInput is the input for the get_series_data tool.
 type SeriesDataInput struct {
-	SeriesID string `json:"series_id" jsonschema:"The series ID."`
+	SeriesID string `json:"series_id" jsonschema:"The GeoFRED series ID (e.g., 'WIPCPI')."`
 	MapDataOptions
+}
+
+// SeriesGroupInput is the input for the get_series_group tool.
+type SeriesGroupInput struct {
+	SeriesID string `json:"series_id" jsonschema:"The GeoFRED series ID (e.g., 'WIPCPI')."`
 }
 
 // RegionalDataInput is the input for the get_regional_data tool.

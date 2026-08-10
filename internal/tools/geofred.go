@@ -9,7 +9,7 @@ import (
 	"github.com/shanehull/go-fred"
 )
 
-func HandleGetSeriesGroup(ctx context.Context, client *fred.Client, _ *mcp.CallToolRequest, in SeriesIDInput) (*mcp.CallToolResult, any, error) {
+func HandleGetSeriesGroup(ctx context.Context, client *fred.Client, _ *mcp.CallToolRequest, in SeriesGroupInput) (*mcp.CallToolResult, any, error) {
 	if in.SeriesID == "" {
 		return nil, nil, errors.New("series_id is required")
 	}
