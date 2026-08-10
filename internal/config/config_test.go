@@ -14,7 +14,6 @@ func TestLoadDefaults(t *testing.T) {
 	_ = os.Unsetenv("OAUTH_JWKS_URL")
 	_ = os.Unsetenv("OAUTH_AUTHORIZE_URL")
 	_ = os.Unsetenv("OAUTH_TOKEN_URL")
-	_ = os.Unsetenv("PUBLIC_HOST")
 	_ = os.Unsetenv("OAUTH_AUDIENCE")
 	_ = os.Unsetenv("OAUTH_CLIENT_SECRET")
 	_ = os.Unsetenv("OAUTH_ALLOWED_EMAILS")
@@ -44,13 +43,11 @@ func TestLoadOverrides(t *testing.T) {
 	_ = os.Setenv("OAUTH_AUDIENCE", "test-client-id")
 	_ = os.Setenv("OAUTH_CLIENT_SECRET", "test-secret")
 	_ = os.Setenv("OAUTH_ALLOWED_EMAILS", "test@example.com,bob@example.com")
-	_ = os.Setenv("PUBLIC_HOST", "https://example.com")
 	defer func() { _ = os.Unsetenv("FRED_API_KEY") }()
 	defer func() { _ = os.Unsetenv("PORT") }()
 	defer func() { _ = os.Unsetenv("OAUTH_AUDIENCE") }()
 	defer func() { _ = os.Unsetenv("OAUTH_CLIENT_SECRET") }()
 	defer func() { _ = os.Unsetenv("OAUTH_ALLOWED_EMAILS") }()
-	defer func() { _ = os.Unsetenv("PUBLIC_HOST") }()
 
 	cfg := config.Load()
 
@@ -75,8 +72,5 @@ func TestLoadOverrides(t *testing.T) {
 		if cfg.AllowedEmails[0] != "test@example.com" {
 			t.Errorf("expected first email=test@example.com, got %s", cfg.AllowedEmails[0])
 		}
-	}
-	if cfg.PublicHost != "https://example.com" {
-		t.Errorf("expected PublicHost=https://example.com, got %s", cfg.PublicHost)
 	}
 }

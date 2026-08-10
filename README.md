@@ -257,7 +257,6 @@ All settings via environment variables.
 | `OAUTH_JWKS_URL`      | Google certs | JWKS endpoint                       |
 | `OAUTH_AUTHORIZE_URL` | Google auth  | OAuth authorize endpoint            |
 | `OAUTH_TOKEN_URL`     | Google token | OAuth token endpoint                |
-| `PUBLIC_HOST`         | _(auto)_     | Public host for discovery URLs      |
 | `OAUTH_AUDIENCE`      | _(empty)_    | OAuth client ID; unset = no auth    |
 | `OAUTH_CLIENT_SECRET` | _(empty)_    | OAuth client secret (server-side)   |
 | `OAUTH_ALLOWED_EMAILS` | _(empty)_    | Restrict access to emails (comma-separated) |
