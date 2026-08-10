@@ -53,23 +53,24 @@ internal/tools/             Tool handler implementations (37 tools)
 - Stdlib `testing` only, no testify or gomega
 - Unit tests use `httptest.Server` mock, no live API calls
 - Integration tests are gated by `FRED_API_KEY` env var (function names: `TestLive_*`)
-- Tools return errors in `CallToolResult`, not as Go errors
-- Use `mcp.WithReadOnlyHintAnnotation(true)` and `mcp.WithDestructiveHintAnnotation(false)` for all tools
+- Tools return errors as Go errors from handlers; the SDK packs them into `CallToolResult` with `IsError` set
+- All tools are read-only: register with the `readOnlyTool(name, description)` helper
 - Semantic commits for release-please: `feat:` bumps minor (pre-1.0), `fix:` bumps patch. `docs:`, `ci:`, `chore:` don't bump version but appear in changelog.
 - Known test series: `DGS20` (20-year Treasury), `UNRATE` (Unemployment Rate), `WIPCPI` (GeoFRED per-capita income), `SMU56000000500000001A` (GeoFRED), release `53` (GDP), category `1` (Production & Business Activity), category `0` (root), source `1` (Federal Reserve), tag `"gdp"`/`"business"`.
 
 ## Tool handler pattern
 
+Tool inputs are typed structs in `internal/tools/input.go`; fields without `omitempty` are required, shared option sets are embedded and flattened into the schema. Handlers use `ToolHandlerFor` and are registered with `mcp.AddTool`.
+
 ```go
-func HandleGetSeriesInfo(ctx context.Context, client *fred.Client, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-    seriesID, err := req.RequireString("series_id")
-    if err != nil {
-        return mcp.NewToolResultError(err.Error()), nil
+func HandleGetSeriesInfo(ctx context.Context, client *fred.Client, _ *mcp.CallToolRequest, in SeriesIDInput) (*mcp.CallToolResult, any, error) {
+    if in.SeriesID == "" {
+        return nil, nil, errors.New("series_id is required")
     }
-    result, err := client.GetSeriesInfo(ctx, seriesID)
+    result, err := client.GetSeriesInfo(ctx, in.SeriesID)
     if err != nil {
-        return mcp.NewToolResultError(fmt.Sprintf("FRED API error: %v", err)), nil
+        return nil, nil, fmt.Errorf("FRED API error: %v", err)
     }
-    return tools.MarshalResult(result)
+    return nil, result, nil
 }
 ```

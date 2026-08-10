@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/MicahParks/keyfunc/v2"
-	"github.com/mark3labs/mcp-go/server"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/shanehull/fred-mcp/internal/config"
 	"github.com/shanehull/fred-mcp/internal/handlers"
 	"github.com/shanehull/fred-mcp/internal/middleware"
@@ -47,11 +47,10 @@ func runStdio() {
 		os.Exit(1)
 	}
 
-	s := server.NewMCPServer("FRED MCP", version)
-	handlers.RegisterTools(s, client)
+	s := newServer(client)
 
 	slog.Info("Starting FRED MCP server over stdio")
-	if err := server.ServeStdio(s); err != nil {
+	if err := s.Run(context.Background(), &mcp.StdioTransport{}); err != nil {
 		slog.Error("server failed", "error", err)
 		os.Exit(1)
 	}
@@ -69,8 +68,7 @@ func runServe() {
 		os.Exit(1)
 	}
 
-	s := server.NewMCPServer("FRED MCP", version)
-	handlers.RegisterTools(s, client)
+	s := newServer(client)
 
 	var jwks *keyfunc.JWKS
 	if cfg.OAuthAudience != "" {
@@ -82,8 +80,8 @@ func runServe() {
 		}
 	}
 
-	sse := server.NewSSEServer(s, server.WithBaseURL(cfg.PublicHost))
-	streamable := server.NewStreamableHTTPServer(s)
+	sse := mcp.NewSSEHandler(func(*http.Request) *mcp.Server { return s }, nil)
+	streamable := mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server { return s }, nil)
 
 	auth := middleware.Auth(cfg, jwks)
 
@@ -126,11 +124,16 @@ func runServe() {
 	slog.Info("server stopped")
 }
 
-func registerHTTPHandlers(mux *http.ServeMux, cfg *config.Config, sse *server.SSEServer, streamable *server.StreamableHTTPServer, auth func(http.Handler) http.Handler) {
+func newServer(client *fred.Client) *mcp.Server {
+	s := mcp.NewServer(&mcp.Implementation{Name: "fred-mcp", Version: version}, nil)
+	handlers.RegisterTools(s, client)
+	return s
+}
+
+func registerHTTPHandlers(mux *http.ServeMux, cfg *config.Config, sse http.Handler, streamable http.Handler, auth func(http.Handler) http.Handler) {
 	mux.HandleFunc("/healthz", handlers.HandleHealthz())
 
-	mux.Handle("/sse", auth(sse.SSEHandler()))
-	mux.Handle("/message", auth(sse.MessageHandler()))
+	mux.Handle("/sse", auth(sse))
 	mux.Handle("/mcp", auth(streamable))
 
 	mux.Handle("/.well-known/oauth-protected-resource/", handlers.HandleDiscovery(cfg))

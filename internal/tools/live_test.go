@@ -3,9 +3,10 @@ package tools_test
 import (
 	"context"
 	"os"
+	"strconv"
 	"testing"
 
-	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/shanehull/fred-mcp/internal/tools"
 	"github.com/shanehull/go-fred"
 )
@@ -31,11 +32,13 @@ func TestLive_GetSeriesInfo(t *testing.T) { skipIfNoKey(t); testLive(t, "fred_ge
 func TestLive_GetSeriesObservations(t *testing.T) {
 	skipIfNoKey(t)
 	client := newLiveClient(t)
-	result, _ := tools.HandleGetSeriesObservations(context.Background(), client, toolRequest(
-		"series_id", "UNRATE",
-		"limit", "3",
-		"sort_order", "desc",
-	))
+	result := call(context.Background(), client, tools.HandleGetSeriesObservations, tools.SeriesObservationInput{
+		SeriesID: "UNRATE",
+		ObservationOptions: tools.ObservationOptions{
+			Limit:     3,
+			SortOrder: "desc",
+		},
+	})
 	assertTextContainsLive(t, result)
 }
 
@@ -44,7 +47,7 @@ func TestLive_GetCategory(t *testing.T) { skipIfNoKey(t); testLive(t, "fred_get_
 func TestLive_GetCategoryChildren(t *testing.T) {
 	skipIfNoKey(t)
 	client := newLiveClient(t)
-	result, _ := tools.HandleGetCategoryChildren(context.Background(), client, toolRequest("category_id", "0"))
+	result := call(context.Background(), client, tools.HandleGetCategoryChildren, tools.CategoryIDInput{CategoryID: intPtr(0)})
 	assertTextContainsLive(t, result)
 }
 
@@ -53,7 +56,7 @@ func TestLive_GetRelease(t *testing.T) { skipIfNoKey(t); testLive(t, "fred_get_r
 func TestLive_GetReleases(t *testing.T) {
 	skipIfNoKey(t)
 	client := newLiveClient(t)
-	result, _ := tools.HandleGetReleases(context.Background(), client, toolRequest("limit", "5"))
+	result := call(context.Background(), client, tools.HandleGetReleases, tools.ReleaseListOptions{Limit: 5})
 	assertTextContainsLive(t, result)
 }
 
@@ -62,7 +65,7 @@ func TestLive_GetSource(t *testing.T) { skipIfNoKey(t); testLive(t, "fred_get_so
 func TestLive_GetSources(t *testing.T) {
 	skipIfNoKey(t)
 	client := newLiveClient(t)
-	result, _ := tools.HandleGetSources(context.Background(), client, toolRequest("limit", "3"))
+	result := call(context.Background(), client, tools.HandleGetSources, tools.SourceOptions{Limit: 3})
 	assertTextContainsLive(t, result)
 }
 
@@ -70,7 +73,10 @@ func TestLive_GetSources(t *testing.T) {
 func TestLive_GetTags(t *testing.T) {
 	skipIfNoKey(t)
 	client := newLiveClient(t)
-	result, _ := tools.HandleGetTags(context.Background(), client, toolRequest("limit", "3", "tag_names", "gdp,inflation"))
+	result := call(context.Background(), client, tools.HandleGetTags, tools.TagsInput{
+		TagNames:   "gdp,inflation",
+		TagOptions: tools.TagOptions{Limit: 3},
+	})
 	assertTextContainsLive(t, result)
 }
 
@@ -78,7 +84,10 @@ func TestLive_GetTags(t *testing.T) {
 func TestLive_SearchSeries(t *testing.T) {
 	skipIfNoKey(t)
 	client := newLiveClient(t)
-	result, _ := tools.HandleSearchSeries(context.Background(), client, toolRequest("search_text", "GDP", "limit", "3"))
+	result := call(context.Background(), client, tools.HandleSearchSeries, tools.SearchSeriesInput{
+		SearchText:   "GDP",
+		SearchOptions: tools.SearchOptions{Limit: 3},
+	})
 	assertTextContainsLive(t, result)
 }
 
@@ -86,7 +95,7 @@ func TestLive_SearchSeries(t *testing.T) {
 func TestLive_GetSeriesGroup(t *testing.T) {
 	skipIfNoKey(t)
 	client := newLiveClient(t)
-	result, _ := tools.HandleGetSeriesGroup(context.Background(), client, toolRequest("series_id", "WIPCPI"))
+	result := call(context.Background(), client, tools.HandleGetSeriesGroup, tools.SeriesIDInput{SeriesID: "WIPCPI"})
 	assertTextContainsLive(t, result)
 }
 
@@ -95,22 +104,21 @@ func testLive(t *testing.T, toolName string, id string) {
 	client := newLiveClient(t)
 
 	var result *mcp.CallToolResult
-	var goErr error
 
 	switch toolName {
 	case "fred_get_series_info":
-		result, goErr = tools.HandleGetSeriesInfo(context.Background(), client, toolRequest("series_id", id))
+		result = call(context.Background(), client, tools.HandleGetSeriesInfo, tools.SeriesIDInput{SeriesID: id})
 	case "fred_get_category":
-		result, goErr = tools.HandleGetCategory(context.Background(), client, toolRequest("category_id", id))
+		cid, _ := strconv.Atoi(id)
+		result = call(context.Background(), client, tools.HandleGetCategory, tools.CategoryIDInput{CategoryID: &cid})
 	case "fred_get_release":
-		result, goErr = tools.HandleGetRelease(context.Background(), client, toolRequest("release_id", id))
+		rid, _ := strconv.Atoi(id)
+		result = call(context.Background(), client, tools.HandleGetRelease, tools.ReleaseIDInput{ReleaseID: &rid})
 	case "fred_get_source":
-		result, goErr = tools.HandleGetSource(context.Background(), client, toolRequest("source_id", id))
+		sid, _ := strconv.Atoi(id)
+		result = call(context.Background(), client, tools.HandleGetSource, tools.SourceIDInput{SourceID: &sid})
 	default:
 		t.Fatalf("unknown tool: %s", toolName)
-	}
-	if goErr != nil {
-		t.Fatal(goErr)
 	}
 	assertTextContainsLive(t, result)
 }
@@ -120,7 +128,7 @@ func assertTextContainsLive(t *testing.T, result *mcp.CallToolResult) {
 	if result.IsError {
 		text := ""
 		if len(result.Content) > 0 {
-			if tc, ok := result.Content[0].(mcp.TextContent); ok {
+			if tc, ok := result.Content[0].(*mcp.TextContent); ok {
 				text = tc.Text
 			}
 		}

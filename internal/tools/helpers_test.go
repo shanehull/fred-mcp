@@ -1,14 +1,44 @@
 package tools_test
 
 import (
+	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
-	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/shanehull/go-fred"
 )
+
+type toolCaller[In any] func(ctx context.Context, client *fred.Client, req *mcp.CallToolRequest, in In) (*mcp.CallToolResult, any, error)
+
+// call invokes a tool handler directly, mirroring how mcp.AddTool wraps
+// handler errors and output.
+func call[In any](ctx context.Context, client *fred.Client, fn toolCaller[In], in In) *mcp.CallToolResult {
+	res, out, err := fn(ctx, client, nil, in)
+	if err != nil {
+		var errRes mcp.CallToolResult
+		errRes.SetError(err)
+		return &errRes
+	}
+	if res == nil {
+		res = &mcp.CallToolResult{}
+	}
+	if out != nil {
+		b, err := json.Marshal(out)
+		if err != nil {
+			var errRes mcp.CallToolResult
+			errRes.SetError(err)
+			return &errRes
+		}
+		res.Content = []mcp.Content{&mcp.TextContent{Text: string(b)}}
+	}
+	return res
+}
+
+func intPtr(v int) *int { return &v }
 
 func newTestClient(t *testing.T, mock *httptest.Server) *fred.Client {
 	t.Helper()
@@ -28,18 +58,6 @@ func newTestClient(t *testing.T, mock *httptest.Server) *fred.Client {
 	return client
 }
 
-func toolRequest(kv ...string) mcp.CallToolRequest {
-	args := make(map[string]interface{})
-	for i := 0; i < len(kv)-1; i += 2 {
-		args[kv[i]] = kv[i+1]
-	}
-	return mcp.CallToolRequest{
-		Params: mcp.CallToolParams{
-			Arguments: args,
-		},
-	}
-}
-
 func errorMock(t *testing.T, status int, body string) *httptest.Server {
 	t.Helper()
 	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -53,9 +71,9 @@ func assertTextContains(t *testing.T, result *mcp.CallToolResult, substr string)
 	if result.Content == nil {
 		t.Fatalf("expected content containing %q, got nil", substr)
 	}
-	text, ok := result.Content[0].(mcp.TextContent)
+	text, ok := result.Content[0].(*mcp.TextContent)
 	if !ok {
-		t.Fatalf("expected TextContent, got %T", result.Content[0])
+		t.Fatalf("expected *TextContent, got %T", result.Content[0])
 	}
 	if !strings.Contains(text.Text, substr) {
 		t.Errorf("expected %q in result, got: %s", substr, text.Text)

@@ -2,42 +2,41 @@ package tools
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
-	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/shanehull/go-fred"
 )
 
-func HandleGetSources(ctx context.Context, client *fred.Client, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	opts := buildSourceOptions(req)
+func HandleGetSources(ctx context.Context, client *fred.Client, _ *mcp.CallToolRequest, in SourceOptions) (*mcp.CallToolResult, any, error) {
+	opts := buildSourceOptions(in)
 	result, err := client.GetSources(ctx, opts...)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("FRED API error: %v", err)), nil
+		return nil, nil, fmt.Errorf("FRED API error: %v", err)
 	}
-	return MarshalResult(result)
+	return nil, result, nil
 }
 
-func HandleGetSource(ctx context.Context, client *fred.Client, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	id, err := GetInt(req, "source_id")
-	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
+func HandleGetSource(ctx context.Context, client *fred.Client, _ *mcp.CallToolRequest, in SourceIDInput) (*mcp.CallToolResult, any, error) {
+	if in.SourceID == nil {
+		return nil, nil, errors.New("source_id is required")
 	}
-	result, err := client.GetSource(ctx, id)
+	result, err := client.GetSource(ctx, *in.SourceID)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("FRED API error: %v", err)), nil
+		return nil, nil, fmt.Errorf("FRED API error: %v", err)
 	}
-	return MarshalResult(result)
+	return nil, result, nil
 }
 
-func HandleGetSourceReleases(ctx context.Context, client *fred.Client, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	id, err := GetInt(req, "source_id")
-	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
+func HandleGetSourceReleases(ctx context.Context, client *fred.Client, _ *mcp.CallToolRequest, in SourceIDReleasesInput) (*mcp.CallToolResult, any, error) {
+	if in.SourceID == nil {
+		return nil, nil, errors.New("source_id is required")
 	}
-	opts := buildReleaseListOptions(req)
-	result, err := client.GetSourceReleases(ctx, id, opts...)
+	opts := buildReleaseListOptions(in.ReleaseListOptions)
+	result, err := client.GetSourceReleases(ctx, *in.SourceID, opts...)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("FRED API error: %v", err)), nil
+		return nil, nil, fmt.Errorf("FRED API error: %v", err)
 	}
-	return MarshalResult(result)
+	return nil, result, nil
 }

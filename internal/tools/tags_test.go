@@ -15,7 +15,7 @@ func TestHandleGetTags_Success(t *testing.T) {
 	}))
 	defer mock.Close()
 	client := newTestClient(t, mock)
-	result, _ := tools.HandleGetTags(context.Background(), client, toolRequest())
+	result := call(context.Background(), client, tools.HandleGetTags, tools.TagsInput{})
 	assertTextContains(t, result, "gdp")
 	assertTextContains(t, result, "inflation")
 }
@@ -26,13 +26,13 @@ func TestHandleGetRelatedTags_Success(t *testing.T) {
 	}))
 	defer mock.Close()
 	client := newTestClient(t, mock)
-	result, _ := tools.HandleGetRelatedTags(context.Background(), client, toolRequest("tag_names", "gdp"))
+	result := call(context.Background(), client, tools.HandleGetRelatedTags, tools.RelatedTagsInput{TagNames: "gdp"})
 	assertTextContains(t, result, "business")
 }
 
 func TestHandleGetRelatedTags_MissingParam(t *testing.T) {
 	client := newTestClient(t, nil)
-	result, _ := tools.HandleGetRelatedTags(context.Background(), client, toolRequest())
+	result := call(context.Background(), client, tools.HandleGetRelatedTags, tools.RelatedTagsInput{})
 	assertIsError(t, result)
 }
 
@@ -42,12 +42,12 @@ func TestHandleGetTagsSeries_Success(t *testing.T) {
 	}))
 	defer mock.Close()
 	client := newTestClient(t, mock)
-	result, _ := tools.HandleGetTagsSeries(context.Background(), client, toolRequest("tag_names", "gdp"))
+	result := call(context.Background(), client, tools.HandleGetTagsSeries, tools.TagsSeriesInput{TagNames: "gdp"})
 	assertTextContains(t, result, "GDP")
 }
 
 func TestHandleGetTagsSeries_MissingParam(t *testing.T) {
 	client := newTestClient(t, nil)
-	result, _ := tools.HandleGetTagsSeries(context.Background(), client, toolRequest())
+	result := call(context.Background(), client, tools.HandleGetTagsSeries, tools.TagsSeriesInput{})
 	assertIsError(t, result)
 }

@@ -16,13 +16,13 @@ func TestHandleGetRelease_Success(t *testing.T) {
 	}))
 	defer mock.Close()
 	client := newTestClient(t, mock)
-	result, _ := tools.HandleGetRelease(context.Background(), client, toolRequest("release_id", "53"))
+	result := call(context.Background(), client, tools.HandleGetRelease, tools.ReleaseIDInput{ReleaseID: intPtr(53)})
 	assertTextContains(t, result, "GDP")
 }
 
 func TestHandleGetRelease_MissingParam(t *testing.T) {
 	client := newTestClient(t, nil)
-	result, _ := tools.HandleGetRelease(context.Background(), client, toolRequest())
+	result := call(context.Background(), client, tools.HandleGetRelease, tools.ReleaseIDInput{})
 	assertIsError(t, result)
 }
 
@@ -30,7 +30,7 @@ func TestHandleGetRelease_ApiError(t *testing.T) {
 	mock := errorMock(t, http.StatusBadRequest, `{"error_code":400,"error_message":"invalid"}`)
 	defer mock.Close()
 	client := newTestClient(t, mock)
-	result, _ := tools.HandleGetRelease(context.Background(), client, toolRequest("release_id", "999"))
+	result := call(context.Background(), client, tools.HandleGetRelease, tools.ReleaseIDInput{ReleaseID: intPtr(999)})
 	assertIsError(t, result)
 }
 
@@ -40,7 +40,7 @@ func TestHandleGetReleases_Success(t *testing.T) {
 	}))
 	defer mock.Close()
 	client := newTestClient(t, mock)
-	result, _ := tools.HandleGetReleases(context.Background(), client, toolRequest())
+	result := call(context.Background(), client, tools.HandleGetReleases, tools.ReleaseListOptions{})
 	assertTextContains(t, result, "GDP")
 	assertTextContains(t, result, "Industrial")
 }
@@ -54,13 +54,13 @@ func TestHandleGetReleaseDates_Success(t *testing.T) {
 	}))
 	defer mock.Close()
 	client := newTestClient(t, mock)
-	result, _ := tools.HandleGetReleaseDates(context.Background(), client, toolRequest("release_id", "53"))
+	result := call(context.Background(), client, tools.HandleGetReleaseDates, tools.ReleaseIDDatesInput{ReleaseID: intPtr(53)})
 	assertTextContains(t, result, "2024")
 }
 
 func TestHandleGetReleaseDates_MissingParam(t *testing.T) {
 	client := newTestClient(t, nil)
-	result, _ := tools.HandleGetReleaseDates(context.Background(), client, toolRequest())
+	result := call(context.Background(), client, tools.HandleGetReleaseDates, tools.ReleaseIDDatesInput{})
 	assertIsError(t, result)
 }
 
@@ -70,12 +70,12 @@ func TestHandleGetReleaseTables_Success(t *testing.T) {
 	}))
 	defer mock.Close()
 	client := newTestClient(t, mock)
-	result, _ := tools.HandleGetReleaseTables(context.Background(), client, toolRequest("release_id", "53"))
+	result := call(context.Background(), client, tools.HandleGetReleaseTables, tools.ReleaseTablesInput{ReleaseID: intPtr(53)})
 	assertTextContains(t, result, "Table 1")
 }
 
 func TestHandleGetReleaseTables_MissingParam(t *testing.T) {
 	client := newTestClient(t, nil)
-	result, _ := tools.HandleGetReleaseTables(context.Background(), client, toolRequest())
+	result := call(context.Background(), client, tools.HandleGetReleaseTables, tools.ReleaseTablesInput{})
 	assertIsError(t, result)
 }
