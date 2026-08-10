@@ -20,14 +20,13 @@ func TestHandleGetCategory_Success(t *testing.T) {
 	defer mock.Close()
 
 	client := newTestClient(t, mock)
-	req := toolRequest("category_id", "1")
-	result, _ := tools.HandleGetCategory(context.Background(), client, req)
+	result := call(context.Background(), client, tools.HandleGetCategory, tools.CategoryIDInput{CategoryID: intPtr(1)})
 	assertTextContains(t, result, "Production")
 }
 
 func TestHandleGetCategory_MissingParam(t *testing.T) {
 	client := newTestClient(t, nil)
-	result, _ := tools.HandleGetCategory(context.Background(), client, toolRequest())
+	result := call(context.Background(), client, tools.HandleGetCategory, tools.CategoryIDInput{})
 	assertIsError(t, result)
 }
 
@@ -35,7 +34,7 @@ func TestHandleGetCategory_ApiError(t *testing.T) {
 	mock := errorMock(t, http.StatusBadRequest, `{"error_code":400,"error_message":"invalid"}`)
 	defer mock.Close()
 	client := newTestClient(t, mock)
-	result, _ := tools.HandleGetCategory(context.Background(), client, toolRequest("category_id", "999"))
+	result := call(context.Background(), client, tools.HandleGetCategory, tools.CategoryIDInput{CategoryID: intPtr(999)})
 	assertIsError(t, result)
 }
 
@@ -45,13 +44,13 @@ func TestHandleGetCategoryChildren_Success(t *testing.T) {
 	}))
 	defer mock.Close()
 	client := newTestClient(t, mock)
-	result, _ := tools.HandleGetCategoryChildren(context.Background(), client, toolRequest("category_id", "1"))
+	result := call(context.Background(), client, tools.HandleGetCategoryChildren, tools.CategoryIDInput{CategoryID: intPtr(1)})
 	assertTextContains(t, result, "Child")
 }
 
 func TestHandleGetCategoryChildren_MissingParam(t *testing.T) {
 	client := newTestClient(t, nil)
-	result, _ := tools.HandleGetCategoryChildren(context.Background(), client, toolRequest())
+	result := call(context.Background(), client, tools.HandleGetCategoryChildren, tools.CategoryIDInput{})
 	assertIsError(t, result)
 }
 
@@ -61,12 +60,12 @@ func TestHandleGetCategoryTags_Success(t *testing.T) {
 	}))
 	defer mock.Close()
 	client := newTestClient(t, mock)
-	result, _ := tools.HandleGetCategoryTags(context.Background(), client, toolRequest("category_id", "1"))
+	result := call(context.Background(), client, tools.HandleGetCategoryTags, tools.CategoryIDTagInput{CategoryID: intPtr(1)})
 	assertTextContains(t, result, "gdp")
 }
 
 func TestHandleGetCategoryTags_MissingParam(t *testing.T) {
 	client := newTestClient(t, nil)
-	result, _ := tools.HandleGetCategoryTags(context.Background(), client, toolRequest())
+	result := call(context.Background(), client, tools.HandleGetCategoryTags, tools.CategoryIDTagInput{})
 	assertIsError(t, result)
 }

@@ -2,58 +2,48 @@ package tools
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"strings"
 
-	"github.com/mark3labs/mcp-go/mcp"
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/shanehull/go-fred"
 )
 
-func HandleGetTags(ctx context.Context, client *fred.Client, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	opts := buildTagOptions(req)
+func HandleGetTags(ctx context.Context, client *fred.Client, _ *mcp.CallToolRequest, in TagsInput) (*mcp.CallToolResult, any, error) {
+	opts := buildTagOptions(in.TagOptions)
+	if in.TagNames != "" {
+		opts = append(opts, fred.WithTagSetNames(parseStringList(in.TagNames)...))
+	}
 	result, err := client.GetTags(ctx, opts...)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("FRED API error: %v", err)), nil
+		return nil, nil, fmt.Errorf("FRED API error: %v", err)
 	}
-	return MarshalResult(result)
+	return nil, result, nil
 }
 
-func HandleGetRelatedTags(ctx context.Context, client *fred.Client, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	tagNames, err := req.RequireString("tag_names")
-	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
+func HandleGetRelatedTags(ctx context.Context, client *fred.Client, _ *mcp.CallToolRequest, in RelatedTagsInput) (*mcp.CallToolResult, any, error) {
+	if in.TagNames == "" {
+		return nil, nil, errors.New("tag_names is required")
 	}
-	names := parseStringListFromRaw(tagNames)
-	opts := buildTagOptions(req)
-	result, err := client.GetRelatedTags(ctx, names, opts...)
+	opts := buildTagOptions(in.TagOptions)
+	result, err := client.GetRelatedTags(ctx, parseStringList(in.TagNames), opts...)
 	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("FRED API error: %v", err)), nil
+		return nil, nil, fmt.Errorf("FRED API error: %v", err)
 	}
-	return MarshalResult(result)
+	return nil, result, nil
 }
 
-func HandleGetTagsSeries(ctx context.Context, client *fred.Client, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-	tagNames, err := req.RequireString("tag_names")
+func HandleGetTagsSeries(ctx context.Context, client *fred.Client, _ *mcp.CallToolRequest, in TagsSeriesInput) (*mcp.CallToolResult, any, error) {
+	if in.TagNames == "" {
+		return nil, nil, errors.New("tag_names is required")
+	}
+	opts := buildSearchOptions(in.SearchOptions)
+	if in.TagNames != "" {
+		opts = append(opts, fred.WithTagNames(parseStringList(in.TagNames)...))
+	}
+	result, err := client.GetTagsSeries(ctx, parseStringList(in.TagNames), opts...)
 	if err != nil {
-		return mcp.NewToolResultError(err.Error()), nil
+		return nil, nil, fmt.Errorf("FRED API error: %v", err)
 	}
-	names := parseStringListFromRaw(tagNames)
-	opts := buildSearchOptions(req)
-	result, err := client.GetTagsSeries(ctx, names, opts...)
-	if err != nil {
-		return mcp.NewToolResultError(fmt.Sprintf("FRED API error: %v", err)), nil
-	}
-	return MarshalResult(result)
-}
-
-func parseStringListFromRaw(raw string) []string {
-	parts := strings.Split(raw, ",")
-	var result []string
-	for _, p := range parts {
-		p = strings.TrimSpace(p)
-		if p != "" {
-			result = append(result, p)
-		}
-	}
-	return result
+	return nil, result, nil
 }

@@ -1,243 +1,232 @@
 package tools
 
 import (
-	"fmt"
-	"strconv"
 	"strings"
 	"time"
 
-	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/shanehull/go-fred"
 )
 
-func buildObservationOptions(req mcp.CallToolRequest) []fred.ObservationOption {
+func buildObservationOptions(in ObservationOptions) []fred.ObservationOption {
 	var opts []fred.ObservationOption
 
-	if v := req.GetString("observation_start", ""); v != "" {
-		if t, err := time.Parse("2006-01-02", v); err == nil {
+	if in.ObservationStart != "" {
+		if t, err := time.Parse("2006-01-02", in.ObservationStart); err == nil {
 			opts = append(opts, fred.WithObservationStart(t))
 		}
 	}
-	if v := req.GetString("observation_end", ""); v != "" {
-		if t, err := time.Parse("2006-01-02", v); err == nil {
+	if in.ObservationEnd != "" {
+		if t, err := time.Parse("2006-01-02", in.ObservationEnd); err == nil {
 			opts = append(opts, fred.WithObservationEnd(t))
 		}
 	}
-	if v := req.GetString("realtime_start", ""); v != "" {
-		if t, err := time.Parse("2006-01-02", v); err == nil {
+	if in.RealtimeStart != "" {
+		if t, err := time.Parse("2006-01-02", in.RealtimeStart); err == nil {
 			opts = append(opts, fred.WithRealtimeStart(t))
 		}
 	}
-	if v := req.GetString("realtime_end", ""); v != "" {
-		if t, err := time.Parse("2006-01-02", v); err == nil {
+	if in.RealtimeEnd != "" {
+		if t, err := time.Parse("2006-01-02", in.RealtimeEnd); err == nil {
 			opts = append(opts, fred.WithRealtimeEnd(t))
 		}
 	}
-	if v := req.GetString("units", ""); v != "" {
-		opts = append(opts, fred.WithUnits(v))
+	if in.Units != "" {
+		opts = append(opts, fred.WithUnits(in.Units))
 	}
-	if v := req.GetString("frequency", ""); v != "" {
-		opts = append(opts, fred.WithFrequency(v))
+	if in.Frequency != "" {
+		opts = append(opts, fred.WithFrequency(in.Frequency))
 	}
-	if v := req.GetString("aggregation_method", ""); v != "" {
-		opts = append(opts, fred.WithAggregationMethod(v))
+	if in.AggregationMethod != "" {
+		opts = append(opts, fred.WithAggregationMethod(in.AggregationMethod))
 	}
-	if v := req.GetFloat("output_type", 0); v != 0 {
-		opts = append(opts, fred.WithOutputType(int(v)))
+	if in.OutputType != 0 {
+		opts = append(opts, fred.WithOutputType(in.OutputType))
 	}
-	if v := parseStringList(req, "vintage_dates"); len(v) > 0 {
-		opts = append(opts, fred.WithVintageDates(v...))
+	if tags := parseStringList(in.VintageDates); len(tags) > 0 {
+		opts = append(opts, fred.WithVintageDates(tags...))
 	}
-	if v := req.GetString("sort_order", ""); v != "" {
-		opts = append(opts, fred.WithObservationSortOrder(fred.SortOrder(v)))
+	if in.SortOrder != "" {
+		opts = append(opts, fred.WithObservationSortOrder(fred.SortOrder(in.SortOrder)))
 	}
-	if v := req.GetFloat("limit", 0); v != 0 {
-		opts = append(opts, fred.WithObservationLimit(int(v)))
+	if in.Limit != 0 {
+		opts = append(opts, fred.WithObservationLimit(in.Limit))
 	}
-	if v := req.GetFloat("offset", 0); v != 0 {
-		opts = append(opts, fred.WithObservationOffset(int(v)))
+	if in.Offset != 0 {
+		opts = append(opts, fred.WithObservationOffset(in.Offset))
 	}
 
 	return opts
 }
 
-func buildSearchOptions(req mcp.CallToolRequest) []fred.SearchOption {
+func buildSearchOptions(in SearchOptions) []fred.SearchOption {
 	var opts []fred.SearchOption
 
-	if v := req.GetString("search_type", ""); v != "" {
-		opts = append(opts, fred.WithSearchType(v))
+	if in.SearchType != "" {
+		opts = append(opts, fred.WithSearchType(in.SearchType))
 	}
-	if v := req.GetString("order_by", ""); v != "" {
-		opts = append(opts, fred.WithOrderBy(fred.OrderBy(v)))
+	if in.OrderBy != "" {
+		opts = append(opts, fred.WithOrderBy(fred.OrderBy(in.OrderBy)))
 	}
-	if v := req.GetString("sort_order", ""); v != "" {
-		opts = append(opts, fred.WithSortOrder(fred.SortOrder(v)))
+	if in.SortOrder != "" {
+		opts = append(opts, fred.WithSortOrder(fred.SortOrder(in.SortOrder)))
 	}
-	if filterVar := req.GetString("filter_variable", ""); filterVar != "" {
-		filterVal := req.GetString("filter_value", "")
-		opts = append(opts, fred.WithFilter(filterVar, filterVal))
+	if in.FilterVariable != "" {
+		opts = append(opts, fred.WithFilter(in.FilterVariable, in.FilterValue))
 	}
-	if v := req.GetFloat("limit", 0); v > 0 {
-		opts = append(opts, fred.WithLimit(int(v)))
+	if in.Limit > 0 {
+		opts = append(opts, fred.WithLimit(in.Limit))
 	}
-	if tags := parseStringList(req, "tag_names"); len(tags) > 0 {
-		opts = append(opts, fred.WithTagNames(tags...))
-	}
-	if tags := parseStringList(req, "exclude_tag_names"); len(tags) > 0 {
+	if tags := parseStringList(in.ExcludeTagNames); len(tags) > 0 {
 		opts = append(opts, fred.WithExcludeTags(tags...))
 	}
 
 	return opts
 }
 
-func buildTagOptions(req mcp.CallToolRequest) []fred.TagOption {
+func buildTagOptions(in TagOptions) []fred.TagOption {
 	var opts []fred.TagOption
 
-	if v := req.GetString("tag_group_id", ""); v != "" {
-		opts = append(opts, fred.WithTagGroupID(v))
+	if in.TagGroupID != "" {
+		opts = append(opts, fred.WithTagGroupID(in.TagGroupID))
 	}
-	if v := req.GetString("search_text", ""); v != "" {
-		opts = append(opts, fred.WithTagSearchText(v))
+	if in.SearchText != "" {
+		opts = append(opts, fred.WithTagSearchText(in.SearchText))
 	}
-	if v := req.GetFloat("limit", 0); v != 0 {
-		opts = append(opts, fred.WithTagLimit(int(v)))
+	if in.Limit != 0 {
+		opts = append(opts, fred.WithTagLimit(in.Limit))
 	}
-	if v := req.GetString("order_by", ""); v != "" {
-		opts = append(opts, fred.WithTagOrderBy(fred.OrderBy(v)))
+	if in.OrderBy != "" {
+		opts = append(opts, fred.WithTagOrderBy(fred.OrderBy(in.OrderBy)))
 	}
-	if v := req.GetString("sort_order", ""); v != "" {
-		opts = append(opts, fred.WithTagSortOrder(fred.SortOrder(v)))
+	if in.SortOrder != "" {
+		opts = append(opts, fred.WithTagSortOrder(fred.SortOrder(in.SortOrder)))
 	}
-	if tags := parseStringList(req, "tag_names"); len(tags) > 0 {
-		opts = append(opts, fred.WithTagSetNames(tags...))
-	}
-	if tags := parseStringList(req, "exclude_tag_names"); len(tags) > 0 {
+	if tags := parseStringList(in.ExcludeTagNames); len(tags) > 0 {
 		opts = append(opts, fred.WithTagSetExclude(tags...))
 	}
 
 	return opts
 }
 
-func buildReleaseListOptions(req mcp.CallToolRequest) []fred.ReleaseListOption {
+func buildReleaseListOptions(in ReleaseListOptions) []fred.ReleaseListOption {
 	var opts []fred.ReleaseListOption
 
-	if v := req.GetFloat("limit", 0); v != 0 {
-		opts = append(opts, fred.WithReleaseLimit(int(v)))
+	if in.Limit != 0 {
+		opts = append(opts, fred.WithReleaseLimit(in.Limit))
 	}
-	if v := req.GetString("sort_order", ""); v != "" {
-		opts = append(opts, fred.WithReleaseSortOrder(fred.SortOrder(v)))
+	if in.SortOrder != "" {
+		opts = append(opts, fred.WithReleaseSortOrder(fred.SortOrder(in.SortOrder)))
 	}
 
 	return opts
 }
 
-func buildReleaseDateOptions(req mcp.CallToolRequest) []fred.ReleaseDateOption {
+func buildReleaseDateOptions(in ReleaseDateOptions) []fred.ReleaseDateOption {
 	var opts []fred.ReleaseDateOption
 
-	if v := req.GetFloat("limit", 0); v != 0 {
-		opts = append(opts, fred.WithReleaseDateLimit(int(v)))
+	if in.Limit != 0 {
+		opts = append(opts, fred.WithReleaseDateLimit(in.Limit))
 	}
-	if v := req.GetString("sort_order", ""); v != "" {
-		opts = append(opts, fred.WithReleaseDateSortOrder(fred.SortOrder(v)))
+	if in.SortOrder != "" {
+		opts = append(opts, fred.WithReleaseDateSortOrder(fred.SortOrder(in.SortOrder)))
 	}
-	if v := req.GetString("include_release_dates_with_no_data", ""); v == "true" {
+	if in.IncludeReleaseDatesWithNoData == "true" {
 		opts = append(opts, fred.WithIncludeNoData(true))
 	}
 
 	return opts
 }
 
-func buildTableOptions(req mcp.CallToolRequest) []fred.TableOption {
+func buildTableOptions(in TableOptions) []fred.TableOption {
 	var opts []fred.TableOption
 
-	if v := req.GetFloat("element_id", 0); v != 0 {
-		opts = append(opts, fred.WithTableElementID(int(v)))
+	if in.ElementID != 0 {
+		opts = append(opts, fred.WithTableElementID(in.ElementID))
 	}
-	if v := req.GetString("include_observation_values", ""); v == "true" {
+	if in.IncludeObservationValues == "true" {
 		opts = append(opts, fred.WithIncludeObservationValues(true))
 	}
-	if v := req.GetString("observation_date", ""); v != "" {
-		opts = append(opts, fred.WithObservationDate(v))
+	if in.ObservationDate != "" {
+		opts = append(opts, fred.WithObservationDate(in.ObservationDate))
 	}
 
 	return opts
 }
 
-func buildUpdateOptions(req mcp.CallToolRequest) []fred.UpdateOption {
+func buildUpdateOptions(in UpdateOptions) []fred.UpdateOption {
 	var opts []fred.UpdateOption
 
-	if v := req.GetString("start_time", ""); v != "" {
-		opts = append(opts, fred.WithStartTime(v))
+	if in.StartTime != "" {
+		opts = append(opts, fred.WithStartTime(in.StartTime))
 	}
-	if v := req.GetString("end_time", ""); v != "" {
-		opts = append(opts, fred.WithEndTime(v))
+	if in.EndTime != "" {
+		opts = append(opts, fred.WithEndTime(in.EndTime))
 	}
-	if v := req.GetString("filter_value", ""); v != "" {
-		opts = append(opts, fred.WithFilterValue(v))
+	if in.FilterValue != "" {
+		opts = append(opts, fred.WithFilterValue(in.FilterValue))
 	}
-	if v := req.GetFloat("limit", 0); v != 0 {
-		opts = append(opts, fred.WithUpdateLimit(int(v)))
+	if in.Limit != 0 {
+		opts = append(opts, fred.WithUpdateLimit(in.Limit))
 	}
 
 	return opts
 }
 
-func buildSourceOptions(req mcp.CallToolRequest) []fred.SourceOption {
+func buildSourceOptions(in SourceOptions) []fred.SourceOption {
 	var opts []fred.SourceOption
 
-	if v := req.GetFloat("limit", 0); v != 0 {
-		opts = append(opts, fred.WithSourceLimit(int(v)))
+	if in.Limit != 0 {
+		opts = append(opts, fred.WithSourceLimit(in.Limit))
 	}
-	if v := req.GetString("sort_order", ""); v != "" {
-		opts = append(opts, fred.WithSourceSortOrder(fred.SortOrder(v)))
+	if in.SortOrder != "" {
+		opts = append(opts, fred.WithSourceSortOrder(fred.SortOrder(in.SortOrder)))
 	}
 
 	return opts
 }
 
-func buildMapDataOptions(req mcp.CallToolRequest) []fred.MapDataOption {
+func buildMapDataOptions(in MapDataOptions) []fred.MapDataOption {
 	var opts []fred.MapDataOption
 
-	if v := req.GetString("date", ""); v != "" {
-		opts = append(opts, fred.WithMapDate(v))
+	if in.Date != "" {
+		opts = append(opts, fred.WithMapDate(in.Date))
 	}
-	if v := req.GetString("start_date", ""); v != "" {
-		opts = append(opts, fred.WithMapStartDate(v))
+	if in.StartDate != "" {
+		opts = append(opts, fred.WithMapStartDate(in.StartDate))
 	}
 
 	return opts
 }
 
-func buildRegionalDataOptions(req mcp.CallToolRequest) []fred.RegionalDataOption {
+func buildRegionalDataOptions(in RegionalDataInput) []fred.RegionalDataOption {
 	var opts []fred.RegionalDataOption
 
-	if v := req.GetString("series_group", ""); v != "" {
-		opts = append(opts, fred.WithSeriesGroup(v))
+	if in.SeriesGroup != "" {
+		opts = append(opts, fred.WithSeriesGroup(in.SeriesGroup))
 	}
-	if v := req.GetString("region_type", ""); v != "" {
-		opts = append(opts, fred.WithRegionType(v))
+	if in.RegionType != "" {
+		opts = append(opts, fred.WithRegionType(in.RegionType))
 	}
-	if v := req.GetString("date", ""); v != "" {
-		opts = append(opts, fred.WithRegionalDate(v))
+	if in.Date != "" {
+		opts = append(opts, fred.WithRegionalDate(in.Date))
 	}
-	if v := req.GetString("season", ""); v != "" {
-		opts = append(opts, fred.WithSeason(v))
+	if in.Season != "" {
+		opts = append(opts, fred.WithSeason(in.Season))
 	}
-	if v := req.GetString("units", ""); v != "" {
-		opts = append(opts, fred.WithMapUnits(v))
+	if in.Units != "" {
+		opts = append(opts, fred.WithMapUnits(in.Units))
 	}
-	if v := req.GetString("transformation", ""); v != "" {
-		opts = append(opts, fred.WithTransformation(v))
+	if in.Transformation != "" {
+		opts = append(opts, fred.WithTransformation(in.Transformation))
 	}
-	if v := req.GetString("frequency", ""); v != "" {
-		opts = append(opts, fred.WithRegionalFrequency(v))
+	if in.Frequency != "" {
+		opts = append(opts, fred.WithRegionalFrequency(in.Frequency))
 	}
 
 	return opts
 }
 
-func parseStringList(req mcp.CallToolRequest, key string) []string {
-	raw := req.GetString(key, "")
+func parseStringList(raw string) []string {
 	if raw == "" {
 		return nil
 	}
@@ -250,24 +239,4 @@ func parseStringList(req mcp.CallToolRequest, key string) []string {
 		}
 	}
 	return result
-}
-
-func GetInt(req mcp.CallToolRequest, key string) (int, error) {
-	raw := req.GetString(key, "")
-	if raw == "" {
-		return 0, fmt.Errorf("%s is required", key)
-	}
-	return strconv.Atoi(raw)
-}
-
-func GetIntPtr(req mcp.CallToolRequest, key string) (int, bool) {
-	raw := req.GetString(key, "")
-	if raw == "" {
-		return 0, false
-	}
-	v, err := strconv.Atoi(raw)
-	if err != nil {
-		return 0, false
-	}
-	return v, true
 }

@@ -15,13 +15,13 @@ func TestHandleGetSeriesGroup_Success(t *testing.T) {
 	}))
 	defer mock.Close()
 	client := newTestClient(t, mock)
-	result, _ := tools.HandleGetSeriesGroup(context.Background(), client, toolRequest("series_id", "WIPCPI"))
+	result := call(context.Background(), client, tools.HandleGetSeriesGroup, tools.SeriesIDInput{SeriesID: "WIPCPI"})
 	assertTextContains(t, result, "Personal Income")
 }
 
 func TestHandleGetSeriesGroup_MissingParam(t *testing.T) {
 	client := newTestClient(t, nil)
-	result, _ := tools.HandleGetSeriesGroup(context.Background(), client, toolRequest())
+	result := call(context.Background(), client, tools.HandleGetSeriesGroup, tools.SeriesIDInput{})
 	assertIsError(t, result)
 }
 
@@ -29,7 +29,7 @@ func TestHandleGetSeriesGroup_ApiError(t *testing.T) {
 	mock := errorMock(t, http.StatusBadRequest, `{"error_code":400,"error_message":"invalid"}`)
 	defer mock.Close()
 	client := newTestClient(t, mock)
-	result, _ := tools.HandleGetSeriesGroup(context.Background(), client, toolRequest("series_id", "INVALID"))
+	result := call(context.Background(), client, tools.HandleGetSeriesGroup, tools.SeriesIDInput{SeriesID: "INVALID"})
 	assertIsError(t, result)
 }
 
@@ -39,13 +39,13 @@ func TestHandleGetSeriesData_Success(t *testing.T) {
 	}))
 	defer mock.Close()
 	client := newTestClient(t, mock)
-	result, _ := tools.HandleGetSeriesData(context.Background(), client, toolRequest("series_id", "WIPCPI"))
+	result := call(context.Background(), client, tools.HandleGetSeriesData, tools.SeriesDataInput{SeriesID: "WIPCPI"})
 	assertTextContains(t, result, "California")
 }
 
 func TestHandleGetSeriesData_MissingParam(t *testing.T) {
 	client := newTestClient(t, nil)
-	result, _ := tools.HandleGetSeriesData(context.Background(), client, toolRequest())
+	result := call(context.Background(), client, tools.HandleGetSeriesData, tools.SeriesDataInput{})
 	assertIsError(t, result)
 }
 
@@ -55,19 +55,19 @@ func TestHandleGetRegionalData_Success(t *testing.T) {
 	}))
 	defer mock.Close()
 	client := newTestClient(t, mock)
-	result, _ := tools.HandleGetRegionalData(context.Background(), client, toolRequest(
-		"series_group", "882",
-		"date", "2013-01-01",
-		"frequency", "a",
-		"units", "lin",
-		"season", "NSA",
-		"region_type", "state",
-	))
+	result := call(context.Background(), client, tools.HandleGetRegionalData, tools.RegionalDataInput{
+		SeriesGroup: "882",
+		Date:        "2013-01-01",
+		Frequency:   "a",
+		Units:       "lin",
+		Season:      "NSA",
+		RegionType:  "state",
+	})
 	assertTextContains(t, result, "New York")
 }
 
 func TestHandleGetRegionalData_MissingParam(t *testing.T) {
 	client := newTestClient(t, nil)
-	result, _ := tools.HandleGetRegionalData(context.Background(), client, toolRequest())
+	result := call(context.Background(), client, tools.HandleGetRegionalData, tools.RegionalDataInput{})
 	assertIsError(t, result)
 }

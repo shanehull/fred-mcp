@@ -7,7 +7,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/shanehull/fred-mcp/internal/tools"
 	"github.com/shanehull/go-fred"
 )
@@ -31,28 +30,8 @@ func TestHandleGetSeriesInfo_Success(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := mcp.CallToolRequest{
-		Params: mcp.CallToolParams{
-			Arguments: map[string]interface{}{
-				"series_id": "GDP",
-			},
-		},
-	}
-
-	result, err := tools.HandleGetSeriesInfo(context.Background(), client, req)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if result.Content == nil {
-		t.Fatal("expected content in result")
-	}
-	text, ok := result.Content[0].(mcp.TextContent)
-	if !ok {
-		t.Fatal("expected text content")
-	}
-	if !strings.Contains(text.Text, "Gross Domestic Product") {
-		t.Errorf("expected GDP in result, got %s", text.Text)
-	}
+	result := call(context.Background(), client, tools.HandleGetSeriesInfo, tools.SeriesIDInput{SeriesID: "GDP"})
+	assertTextContains(t, result, "Gross Domestic Product")
 }
 
 func TestHandleGetSeriesInfo_MissingParam(t *testing.T) {
@@ -65,19 +44,8 @@ func TestHandleGetSeriesInfo_MissingParam(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := mcp.CallToolRequest{
-		Params: mcp.CallToolParams{
-			Arguments: map[string]interface{}{},
-		},
-	}
-
-	result, err := tools.HandleGetSeriesInfo(context.Background(), client, req)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !result.IsError {
-		t.Fatal("expected error result")
-	}
+	result := call(context.Background(), client, tools.HandleGetSeriesInfo, tools.SeriesIDInput{})
+	assertIsError(t, result)
 }
 
 func TestHandleGetSeriesInfo_ApiError(t *testing.T) {
@@ -96,21 +64,8 @@ func TestHandleGetSeriesInfo_ApiError(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := mcp.CallToolRequest{
-		Params: mcp.CallToolParams{
-			Arguments: map[string]interface{}{
-				"series_id": "INVALID",
-			},
-		},
-	}
-
-	result, err := tools.HandleGetSeriesInfo(context.Background(), client, req)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !result.IsError {
-		t.Fatal("expected error result")
-	}
+	result := call(context.Background(), client, tools.HandleGetSeriesInfo, tools.SeriesIDInput{SeriesID: "INVALID"})
+	assertIsError(t, result)
 }
 
 func TestHandleGetSeriesObservations_WithOptions(t *testing.T) {
@@ -136,19 +91,12 @@ func TestHandleGetSeriesObservations_WithOptions(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	req := mcp.CallToolRequest{
-		Params: mcp.CallToolParams{
-			Arguments: map[string]interface{}{
-				"series_id": "DGS20",
-				"units":     "lin",
-			},
+	result := call(context.Background(), client, tools.HandleGetSeriesObservations, tools.SeriesObservationInput{
+		SeriesID: "DGS20",
+		ObservationOptions: tools.ObservationOptions{
+			Units: "lin",
 		},
-	}
-
-	result, err := tools.HandleGetSeriesObservations(context.Background(), client, req)
-	if err != nil {
-		t.Fatal(err)
-	}
+	})
 	if result.Content == nil {
 		t.Fatal("expected content")
 	}

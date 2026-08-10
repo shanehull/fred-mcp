@@ -15,13 +15,13 @@ func TestHandleSearchSeries_Success(t *testing.T) {
 	}))
 	defer mock.Close()
 	client := newTestClient(t, mock)
-	result, _ := tools.HandleSearchSeries(context.Background(), client, toolRequest("search_text", "GDP"))
+	result := call(context.Background(), client, tools.HandleSearchSeries, tools.SearchSeriesInput{SearchText: "GDP"})
 	assertTextContains(t, result, "Gross Domestic Product")
 }
 
 func TestHandleSearchSeries_MissingParam(t *testing.T) {
 	client := newTestClient(t, nil)
-	result, _ := tools.HandleSearchSeries(context.Background(), client, toolRequest())
+	result := call(context.Background(), client, tools.HandleSearchSeries, tools.SearchSeriesInput{})
 	assertIsError(t, result)
 }
 
@@ -29,7 +29,7 @@ func TestHandleSearchSeries_ApiError(t *testing.T) {
 	mock := errorMock(t, http.StatusBadRequest, `{"error_code":400,"error_message":"invalid"}`)
 	defer mock.Close()
 	client := newTestClient(t, mock)
-	result, _ := tools.HandleSearchSeries(context.Background(), client, toolRequest("search_text", ""))
+	result := call(context.Background(), client, tools.HandleSearchSeries, tools.SearchSeriesInput{SearchText: ""})
 	assertIsError(t, result)
 }
 
@@ -39,13 +39,13 @@ func TestHandleGetReleaseSeries_Success(t *testing.T) {
 	}))
 	defer mock.Close()
 	client := newTestClient(t, mock)
-	result, _ := tools.HandleGetReleaseSeries(context.Background(), client, toolRequest("release_id", "53"))
+	result := call(context.Background(), client, tools.HandleGetReleaseSeries, tools.ReleaseSeriesInput{ReleaseID: intPtr(53)})
 	assertTextContains(t, result, "GDP")
 }
 
 func TestHandleGetReleaseSeries_MissingParam(t *testing.T) {
 	client := newTestClient(t, nil)
-	result, _ := tools.HandleGetReleaseSeries(context.Background(), client, toolRequest())
+	result := call(context.Background(), client, tools.HandleGetReleaseSeries, tools.ReleaseSeriesInput{})
 	assertIsError(t, result)
 }
 
@@ -55,12 +55,12 @@ func TestHandleGetCategorySeries_Success(t *testing.T) {
 	}))
 	defer mock.Close()
 	client := newTestClient(t, mock)
-	result, _ := tools.HandleGetCategorySeries(context.Background(), client, toolRequest("category_id", "1"))
+	result := call(context.Background(), client, tools.HandleGetCategorySeries, tools.CategorySeriesInput{CategoryID: intPtr(1)})
 	assertTextContains(t, result, "Consumer Price Index")
 }
 
 func TestHandleGetCategorySeries_MissingParam(t *testing.T) {
 	client := newTestClient(t, nil)
-	result, _ := tools.HandleGetCategorySeries(context.Background(), client, toolRequest())
+	result := call(context.Background(), client, tools.HandleGetCategorySeries, tools.CategorySeriesInput{})
 	assertIsError(t, result)
 }
