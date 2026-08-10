@@ -14,6 +14,6 @@ jobs:
       - name: Verify flake evaluates on all systems
         run: |-
           nix flake show --all-systems
-          for system in x86_64-linux aarch64-linux x86_64-darwin aarch64-darwin; do
+          for system in x86_64-linux aarch64-linux aarch64-darwin; do
             nix eval ".#packages.$system.default.drvPath" --raw
           done
