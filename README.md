@@ -6,7 +6,6 @@
   <img src="assets/fred-logo.svg" height="48" alt="FRED">
 </p>
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/shanehull/fred-mcp)](https://goreportcard.com/report/github.com/shanehull/fred-mcp)
 [![CI](https://github.com/shanehull/fred-mcp/actions/workflows/test.yaml/badge.svg)](https://github.com/shanehull/fred-mcp/actions/workflows/test.yaml)
 [![Docker](https://img.shields.io/badge/docker-ghcr.io-blue)](https://github.com/shanehull/fred-mcp/pkgs/container/fred-mcp)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
