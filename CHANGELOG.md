@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.3](https://github.com/shanehull/fred-mcp/compare/v0.1.2...v0.1.3) (2026-08-11)
+
+
+### Features
+
+* swap MCP SDK to modelcontextprotocol/go-sdk ([#20](https://github.com/shanehull/fred-mcp/issues/20)) ([de659d2](https://github.com/shanehull/fred-mcp/commit/de659d280a3a84ad7fdf790b545d07c6ff783bf7))
+
+
+### Bug Fixes
+
+* use GeoFRED-specific series_id descriptions ([#23](https://github.com/shanehull/fred-mcp/issues/23)) ([0ab67f6](https://github.com/shanehull/fred-mcp/commit/0ab67f6a6507fc626bdbe7b1a187afeaf3fc8ba6))
+
 ## [0.1.2](https://github.com/shanehull/fred-mcp/compare/v0.1.1...v0.1.2) (2026-05-10)
 
 
