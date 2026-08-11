@@ -15,13 +15,13 @@ func TestHandleGetSeriesGroup_Success(t *testing.T) {
 	}))
 	defer mock.Close()
 	client := newTestClient(t, mock)
-	result := call(context.Background(), client, tools.HandleGetSeriesGroup, tools.SeriesIDInput{SeriesID: "WIPCPI"})
+	result := call(context.Background(), client, tools.HandleGetSeriesGroup, tools.SeriesGroupInput{SeriesID: "WIPCPI"})
 	assertTextContains(t, result, "Personal Income")
 }
 
 func TestHandleGetSeriesGroup_MissingParam(t *testing.T) {
 	client := newTestClient(t, nil)
-	result := call(context.Background(), client, tools.HandleGetSeriesGroup, tools.SeriesIDInput{})
+	result := call(context.Background(), client, tools.HandleGetSeriesGroup, tools.SeriesGroupInput{})
 	assertIsError(t, result)
 }
 
@@ -29,7 +29,7 @@ func TestHandleGetSeriesGroup_ApiError(t *testing.T) {
 	mock := errorMock(t, http.StatusBadRequest, `{"error_code":400,"error_message":"invalid"}`)
 	defer mock.Close()
 	client := newTestClient(t, mock)
-	result := call(context.Background(), client, tools.HandleGetSeriesGroup, tools.SeriesIDInput{SeriesID: "INVALID"})
+	result := call(context.Background(), client, tools.HandleGetSeriesGroup, tools.SeriesGroupInput{SeriesID: "INVALID"})
 	assertIsError(t, result)
 }
 

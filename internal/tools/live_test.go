@@ -95,7 +95,7 @@ func TestLive_SearchSeries(t *testing.T) {
 func TestLive_GetSeriesGroup(t *testing.T) {
 	skipIfNoKey(t)
 	client := newLiveClient(t)
-	result := call(context.Background(), client, tools.HandleGetSeriesGroup, tools.SeriesIDInput{SeriesID: "WIPCPI"})
+	result := call(context.Background(), client, tools.HandleGetSeriesGroup, tools.SeriesGroupInput{SeriesID: "WIPCPI"})
 	assertTextContainsLive(t, result)
 }
 
