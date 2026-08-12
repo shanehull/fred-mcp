@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/shanehull/fred-mcp/compare/v0.1.3...v0.1.4) (2026-08-12)
+
+
+### Bug Fixes
+
+* wrap list tool output so structuredContent is always an object ([#26](https://github.com/shanehull/fred-mcp/issues/26)) ([04d47cd](https://github.com/shanehull/fred-mcp/commit/04d47cd4159e0cb8d40a7b2f55a3743c05a8e5c8))
+
 ## [0.1.3](https://github.com/shanehull/fred-mcp/compare/v0.1.2...v0.1.3) (2026-08-11)
 
 
