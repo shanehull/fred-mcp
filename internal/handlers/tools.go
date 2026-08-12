@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/shanehull/fred-mcp/internal/tools"
@@ -88,6 +89,30 @@ func readOnlyTool(name, description string) *mcp.Tool {
 
 func toolHandler[In any](client *fred.Client, fn toolFn[In]) func(ctx context.Context, req *mcp.CallToolRequest, in In) (*mcp.CallToolResult, any, error) {
 	return func(ctx context.Context, req *mcp.CallToolRequest, in In) (*mcp.CallToolResult, any, error) {
-		return fn(ctx, client, req, in)
+		res, out, err := fn(ctx, client, req, in)
+		if err != nil {
+			return res, out, err
+		}
+		return res, asObject(out), nil
 	}
+}
+
+// asObject wraps list and other non-object outputs so structuredContent is
+// always a JSON object. Some MCP clients (e.g. OpenCode) reject array
+// structuredContent, which the FRED list endpoints would otherwise produce.
+func asObject(out any) any {
+	if out == nil {
+		return nil
+	}
+	v := reflect.ValueOf(out)
+	for v.Kind() == reflect.Pointer {
+		if v.IsNil() {
+			return out
+		}
+		v = v.Elem()
+	}
+	if v.Kind() == reflect.Slice || v.Kind() == reflect.Array {
+		return map[string]any{"data": out}
+	}
+	return out
 }
