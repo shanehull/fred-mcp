@@ -14,6 +14,7 @@ type Config struct {
 	OAuthTokenURL     string
 	OAuthAudience     string
 	OAuthClientSecret string
+	OAuthCallbackURL  string
 	AllowedEmails     []string
 }
 
@@ -58,6 +59,7 @@ func Load() *Config {
 		OAuthTokenURL:     getEnv("OAUTH_TOKEN_URL", "https://oauth2.googleapis.com/token"),
 		OAuthAudience:     os.Getenv("OAUTH_AUDIENCE"),
 		OAuthClientSecret: os.Getenv("OAUTH_CLIENT_SECRET"),
+		OAuthCallbackURL:  os.Getenv("OAUTH_CALLBACK_URL"),
 		AllowedEmails:     loadAllowedEmails(),
 	}
 }

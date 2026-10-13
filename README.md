@@ -135,10 +135,13 @@ When `OAUTH_AUDIENCE` is set, MCP routes require a valid Bearer token. The serve
 | `/.well-known/oauth-authorization-server` | RFC 8414 discovery                       |
 | `/register`                               | Dynamic client registration              |
 | `/authorize`                              | Authorize proxy (injects scope)          |
+| `/oauth/callback`                         | Authorize callback (strips iss)          |
 | `/token`                                  | Token proxy (injects client credentials) |
 | `/config`                                 | OAuth config endpoint                    |
 
 Tokens are validated via JWKS (JWT) with opaque token fallback (Google tokeninfo). Restrict access with `OAUTH_ALLOWED_EMAILS` (comma-separated). `OAUTH_ALLOWED_EMAIL` is deprecated but still works.
+
+Point `OAUTH_CALLBACK_URL` at this server (for example `https://fred.example.com/oauth/callback`) and register the same URL as an authorized redirect URI on the Google OAuth client. The client must be a **Web application**; desktop app clients only allow loopback redirect URIs and cannot own a proxy callback. The callback flow requires `OAUTH_AUDIENCE` and `OAUTH_CLIENT_SECRET`. The proxy terminates the Google redirect and returns to the MCP client itself, so the response carries no RFC 9207 `iss` parameter.
 
 ### Docker
 
@@ -258,6 +261,7 @@ All settings via environment variables.
 | `OAUTH_TOKEN_URL`     | Google token | OAuth token endpoint                |
 | `OAUTH_AUDIENCE`      | _(empty)_    | OAuth client ID; unset = no auth    |
 | `OAUTH_CLIENT_SECRET` | _(empty)_    | OAuth client secret (server-side)   |
+| `OAUTH_CALLBACK_URL`  | _(empty)_    | OAuth proxy callback URL            |
 | `OAUTH_ALLOWED_EMAILS` | _(empty)_    | Restrict access to emails (comma-separated) |
 | `OAUTH_ALLOWED_EMAIL`  | _(empty)_    | _(deprecated)_ Single email; use `OAUTH_ALLOWED_EMAILS` |
 

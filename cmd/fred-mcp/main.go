@@ -143,6 +143,7 @@ func registerHTTPHandlers(mux *http.ServeMux, cfg *config.Config, sse http.Handl
 
 	mux.HandleFunc("/register", handlers.HandleRegistration(cfg))
 	mux.HandleFunc("/authorize", handlers.HandleAuthorizeProxy(cfg))
+	mux.HandleFunc("/oauth/callback", handlers.HandleAuthorizeCallback(cfg))
 	mux.HandleFunc("/token", handlers.HandleTokenProxy(cfg))
 	mux.HandleFunc("/config", handlers.HandleConfig(cfg))
 }
