@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.5](https://github.com/shanehull/fred-mcp/compare/v0.1.4...v0.1.5) (2026-10-13)
+
+
+### Bug Fixes
+
+* terminate OAuth redirect at proxy to resolve RFC 9207 issuer mismatch ([#28](https://github.com/shanehull/fred-mcp/issues/28)) ([085636a](https://github.com/shanehull/fred-mcp/commit/085636af1436c268a9eca1b27cfcdd4450ca785f))
+
 ## [0.1.4](https://github.com/shanehull/fred-mcp/compare/v0.1.3...v0.1.4) (2026-08-12)
 
 
