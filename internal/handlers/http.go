@@ -1,7 +1,12 @@
 package handlers
 
 import (
+	"crypto/hmac"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -12,15 +17,85 @@ import (
 	"github.com/shanehull/fred-mcp/internal/config"
 )
 
+// fallbackStateKey signs authorize state when no client secret is configured.
+var fallbackStateKey = func() []byte {
+	key := make([]byte, 32)
+	if _, err := rand.Read(key); err != nil {
+		panic(fmt.Sprintf("handlers: generate OAuth state key: %v", err))
+	}
+	return key
+}()
+
+type authorizeState struct {
+	RedirectURI string `json:"redirect_uri"`
+	State       string `json:"state,omitempty"`
+}
+
+func stateKey(cfg *config.Config) []byte {
+	if cfg.OAuthClientSecret != "" {
+		return []byte(cfg.OAuthClientSecret)
+	}
+	return fallbackStateKey
+}
+
+func signState(key []byte, payload authorizeState) (string, error) {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return "", err
+	}
+	mac := hmac.New(sha256.New, key)
+	mac.Write(data)
+	return base64.RawURLEncoding.EncodeToString(data) + "." + base64.RawURLEncoding.EncodeToString(mac.Sum(nil)), nil
+}
+
+func verifyState(key []byte, token string) (authorizeState, error) {
+	var payload authorizeState
+	dataPart, sigPart, ok := strings.Cut(token, ".")
+	if !ok {
+		return payload, errors.New("malformed state")
+	}
+	data, err := base64.RawURLEncoding.DecodeString(dataPart)
+	if err != nil {
+		return payload, errors.New("malformed state payload")
+	}
+	sig, err := base64.RawURLEncoding.DecodeString(sigPart)
+	if err != nil {
+		return payload, errors.New("malformed state signature")
+	}
+	mac := hmac.New(sha256.New, key)
+	mac.Write(data)
+	if !hmac.Equal(sig, mac.Sum(nil)) {
+		return payload, errors.New("state signature mismatch")
+	}
+	if err := json.Unmarshal(data, &payload); err != nil {
+		return payload, errors.New("malformed state payload")
+	}
+	if payload.RedirectURI == "" {
+		return payload, errors.New("state missing redirect_uri")
+	}
+	return payload, nil
+}
+
+func baseURL(r *http.Request) string {
+	scheme := "http"
+	if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
+		scheme = "https"
+	}
+	return fmt.Sprintf("%s://%s", scheme, r.Host)
+}
+
+func callbackURL(cfg *config.Config, r *http.Request) string {
+	if cfg.OAuthCallbackURL != "" {
+		return cfg.OAuthCallbackURL
+	}
+	return baseURL(r) + "/oauth/callback"
+}
+
 func HandleDiscovery(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		scheme := "http"
-		if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
-			scheme = "https"
-		}
-		host := fmt.Sprintf("%s://%s", scheme, r.Host)
+		host := baseURL(r)
 
 		resourcePath := strings.TrimPrefix(r.URL.Path, "/.well-known/oauth-protected-resource")
 		if resourcePath == "" {
@@ -48,11 +123,7 @@ func HandleAuthServerDiscovery(cfg *config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 
-		scheme := "http"
-		if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
-			scheme = "https"
-		}
-		host := fmt.Sprintf("%s://%s", scheme, r.Host)
+		host := baseURL(r)
 
 		res := map[string]interface{}{
 			"issuer":                           host,
@@ -113,8 +184,66 @@ func HandleAuthorizeProxy(cfg *config.Config) http.HandlerFunc {
 		if params.Get("scope") == "" {
 			params.Set("scope", "openid email profile")
 		}
-		target := cfg.OAuthAuthorizeURL + "?" + params.Encode()
-		http.Redirect(w, r, target, http.StatusFound)
+
+		clientRedirect := params.Get("redirect_uri")
+		if clientRedirect == "" {
+			http.Error(w, "Missing redirect_uri", http.StatusBadRequest)
+			return
+		}
+
+		state, err := signState(stateKey(cfg), authorizeState{
+			RedirectURI: clientRedirect,
+			State:       params.Get("state"),
+		})
+		if err != nil {
+			slog.Error("authorize proxy: failed to sign state", "error", err)
+			http.Error(w, "Failed to encode state", http.StatusInternalServerError)
+			return
+		}
+
+		params.Set("redirect_uri", callbackURL(cfg, r))
+		params.Set("state", state)
+
+		http.Redirect(w, r, cfg.OAuthAuthorizeURL+"?"+params.Encode(), http.StatusFound)
+	}
+}
+
+// HandleAuthorizeCallback terminates the identity provider redirect, restores the
+// client's redirect_uri and state, and returns the response without forwarding iss.
+func HandleAuthorizeCallback(cfg *config.Config) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		params := r.URL.Query()
+
+		payload, err := verifyState(stateKey(cfg), params.Get("state"))
+		if err != nil {
+			slog.Warn("oauth callback: invalid state", "error", err)
+			http.Error(w, "Invalid state", http.StatusBadRequest)
+			return
+		}
+
+		redirect, err := url.Parse(payload.RedirectURI)
+		if err != nil {
+			slog.Warn("oauth callback: invalid redirect_uri in state", "error", err)
+			http.Error(w, "Invalid state", http.StatusBadRequest)
+			return
+		}
+
+		out := redirect.Query()
+		if payload.State != "" {
+			out.Set("state", payload.State)
+		}
+		if code := params.Get("code"); code != "" {
+			out.Set("code", code)
+		}
+		if errCode := params.Get("error"); errCode != "" {
+			out.Set("error", errCode)
+			if desc := params.Get("error_description"); desc != "" {
+				out.Set("error_description", desc)
+			}
+		}
+		redirect.RawQuery = out.Encode()
+
+		http.Redirect(w, r, redirect.String(), http.StatusFound)
 	}
 }
 
@@ -137,6 +266,9 @@ func HandleTokenProxy(cfg *config.Config) http.HandlerFunc {
 		form.Set("client_id", cfg.OAuthAudience)
 		if cfg.OAuthClientSecret != "" {
 			form.Set("client_secret", cfg.OAuthClientSecret)
+		}
+		if form.Get("grant_type") == "authorization_code" {
+			form.Set("redirect_uri", callbackURL(cfg, r))
 		}
 
 		resp, err := http.PostForm(cfg.OAuthTokenURL, form)

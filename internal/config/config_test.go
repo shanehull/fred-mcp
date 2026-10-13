@@ -16,6 +16,7 @@ func TestLoadDefaults(t *testing.T) {
 	_ = os.Unsetenv("OAUTH_TOKEN_URL")
 	_ = os.Unsetenv("OAUTH_AUDIENCE")
 	_ = os.Unsetenv("OAUTH_CLIENT_SECRET")
+	_ = os.Unsetenv("OAUTH_CALLBACK_URL")
 	_ = os.Unsetenv("OAUTH_ALLOWED_EMAILS")
 
 	cfg := config.Load()
@@ -35,6 +36,9 @@ func TestLoadDefaults(t *testing.T) {
 	if cfg.OAuthAudience != "" {
 		t.Errorf("expected empty OAuthAudience, got %s", cfg.OAuthAudience)
 	}
+	if cfg.OAuthCallbackURL != "" {
+		t.Errorf("expected empty OAuthCallbackURL, got %s", cfg.OAuthCallbackURL)
+	}
 }
 
 func TestLoadOverrides(t *testing.T) {
@@ -42,11 +46,13 @@ func TestLoadOverrides(t *testing.T) {
 	_ = os.Setenv("PORT", "8080")
 	_ = os.Setenv("OAUTH_AUDIENCE", "test-client-id")
 	_ = os.Setenv("OAUTH_CLIENT_SECRET", "test-secret")
+	_ = os.Setenv("OAUTH_CALLBACK_URL", "https://fred.example.com/oauth/callback")
 	_ = os.Setenv("OAUTH_ALLOWED_EMAILS", "test@example.com,bob@example.com")
 	defer func() { _ = os.Unsetenv("FRED_API_KEY") }()
 	defer func() { _ = os.Unsetenv("PORT") }()
 	defer func() { _ = os.Unsetenv("OAUTH_AUDIENCE") }()
 	defer func() { _ = os.Unsetenv("OAUTH_CLIENT_SECRET") }()
+	defer func() { _ = os.Unsetenv("OAUTH_CALLBACK_URL") }()
 	defer func() { _ = os.Unsetenv("OAUTH_ALLOWED_EMAILS") }()
 
 	cfg := config.Load()
@@ -62,6 +68,9 @@ func TestLoadOverrides(t *testing.T) {
 	}
 	if cfg.OAuthClientSecret != "test-secret" {
 		t.Errorf("expected OAuthClientSecret=test-secret, got %s", cfg.OAuthClientSecret)
+	}
+	if cfg.OAuthCallbackURL != "https://fred.example.com/oauth/callback" {
+		t.Errorf("expected OAuthCallbackURL override, got %s", cfg.OAuthCallbackURL)
 	}
 	if cfg.AllowedEmails == nil {
 		t.Error("expected AllowedEmails to be set")
