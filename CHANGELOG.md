@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.6](https://github.com/shanehull/fred-mcp/compare/v0.1.5...v0.1.6) (2026-10-20)
+
+
+### Bug Fixes
+
+* reject unlisted authorize redirect URIs ([#32](https://github.com/shanehull/fred-mcp/issues/32)) ([e2e2b0f](https://github.com/shanehull/fred-mcp/commit/e2e2b0f7899a187b64e340807fd70acaa0ea456a))
+* request offline access so Google issues refresh tokens ([#30](https://github.com/shanehull/fred-mcp/issues/30)) ([04bbb50](https://github.com/shanehull/fred-mcp/commit/04bbb50274cf54753fdd46d3cc15a8fb87385918))
+
 ## [0.1.5](https://github.com/shanehull/fred-mcp/compare/v0.1.4...v0.1.5) (2026-10-13)
 
 
