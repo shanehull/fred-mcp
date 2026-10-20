@@ -15,29 +15,29 @@ type Config struct {
 	OAuthAudience     string
 	OAuthClientSecret string
 	OAuthCallbackURL  string
+	OAuthRedirectURIs []string
 	AllowedEmails     []string
 }
 
-func parseEmails(raw string) []string {
+func parseList(raw string) []string {
 	if raw == "" {
 		return nil
 	}
-	var emails []string
-	for _, e := range strings.Split(raw, ",") {
-		e = strings.TrimSpace(e)
-		if e != "" {
-			emails = append(emails, e)
+	var values []string
+	for _, v := range strings.Split(raw, ",") {
+		if v = strings.TrimSpace(v); v != "" {
+			values = append(values, v)
 		}
 	}
-	return emails
+	return values
 }
 
 func loadAllowedEmails() []string {
 	if raw := os.Getenv("OAUTH_ALLOWED_EMAILS"); raw != "" {
-		return parseEmails(raw)
+		return parseList(raw)
 	}
 	if raw := os.Getenv("OAUTH_ALLOWED_EMAIL"); raw != "" {
-		return parseEmails(raw)
+		return parseList(raw)
 	}
 	return nil
 }
@@ -60,6 +60,7 @@ func Load() *Config {
 		OAuthAudience:     os.Getenv("OAUTH_AUDIENCE"),
 		OAuthClientSecret: os.Getenv("OAUTH_CLIENT_SECRET"),
 		OAuthCallbackURL:  os.Getenv("OAUTH_CALLBACK_URL"),
+		OAuthRedirectURIs: parseList(os.Getenv("OAUTH_REDIRECT_URIS")),
 		AllowedEmails:     loadAllowedEmails(),
 	}
 }
