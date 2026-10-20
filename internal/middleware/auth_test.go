@@ -100,6 +100,9 @@ func TestAuth_InvalidToken_Returns401(t *testing.T) {
 	if rec.Code != http.StatusUnauthorized {
 		t.Errorf("expected 401, got %d", rec.Code)
 	}
+	if rec.Header().Get("WWW-Authenticate") != `Bearer error="invalid_token"` {
+		t.Errorf("expected invalid_token challenge, got %q", rec.Header().Get("WWW-Authenticate"))
+	}
 }
 
 func TestAuth_ValidJWT_AudienceMismatch(t *testing.T) {
