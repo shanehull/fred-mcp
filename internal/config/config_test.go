@@ -18,6 +18,7 @@ func TestLoadDefaults(t *testing.T) {
 	_ = os.Unsetenv("OAUTH_CLIENT_SECRET")
 	_ = os.Unsetenv("OAUTH_CALLBACK_URL")
 	_ = os.Unsetenv("OAUTH_ALLOWED_EMAILS")
+	_ = os.Unsetenv("OAUTH_REDIRECT_URIS")
 
 	cfg := config.Load()
 
@@ -48,12 +49,14 @@ func TestLoadOverrides(t *testing.T) {
 	_ = os.Setenv("OAUTH_CLIENT_SECRET", "test-secret")
 	_ = os.Setenv("OAUTH_CALLBACK_URL", "https://fred.example.com/oauth/callback")
 	_ = os.Setenv("OAUTH_ALLOWED_EMAILS", "test@example.com,bob@example.com")
+	_ = os.Setenv("OAUTH_REDIRECT_URIS", "vscode://shanehull.fred/callback,https://app.example.com/cb")
 	defer func() { _ = os.Unsetenv("FRED_API_KEY") }()
 	defer func() { _ = os.Unsetenv("PORT") }()
 	defer func() { _ = os.Unsetenv("OAUTH_AUDIENCE") }()
 	defer func() { _ = os.Unsetenv("OAUTH_CLIENT_SECRET") }()
 	defer func() { _ = os.Unsetenv("OAUTH_CALLBACK_URL") }()
 	defer func() { _ = os.Unsetenv("OAUTH_ALLOWED_EMAILS") }()
+	defer func() { _ = os.Unsetenv("OAUTH_REDIRECT_URIS") }()
 
 	cfg := config.Load()
 
@@ -81,5 +84,11 @@ func TestLoadOverrides(t *testing.T) {
 		if cfg.AllowedEmails[0] != "test@example.com" {
 			t.Errorf("expected first email=test@example.com, got %s", cfg.AllowedEmails[0])
 		}
+	}
+	if len(cfg.OAuthRedirectURIs) != 2 {
+		t.Fatalf("expected 2 redirect URIs, got %d", len(cfg.OAuthRedirectURIs))
+	}
+	if cfg.OAuthRedirectURIs[0] != "vscode://shanehull.fred/callback" {
+		t.Errorf("expected first redirect URI from env, got %s", cfg.OAuthRedirectURIs[0])
 	}
 }
